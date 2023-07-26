@@ -123,13 +123,13 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: "secret"
 ```
-# Запускаем
+### Запускаем
 
 ```
 docker-compose rm -vf && docker-compose up
 ```
 
-# Проверка
+### Проверка
 Открываем ещё 1 терминал, заходим в master-сервер
 
 ```
