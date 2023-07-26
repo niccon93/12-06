@@ -60,17 +60,90 @@ sudo apt update
 sudo apt-get install docker.io docker-compose
 ```
 
+### Установка контейнеров mysql-серверов
+
+```
+#Создаем
+nano master.cnf
+#Содержимое master.cnf
+[mysqld]
+server-id=1
+binlog_format=ROW
+log-bin
+
+#Конфигурация slave
+nano slave.cnf
+#Содержимое slave.cnf
+[mysqld]
+server-id=2
+binlog_format=ROW
+log-bin
+```
+
+### Изменения при старте сервера
+
+```
+nano master.sql
+
+#Содержимое master.sql
+CREATE USER repl@'%' IDENTIFIED WITH mysql_native_password BY 'slavepass';
+GRANT replication slave ON *.* TO 'repl'@'%';
+
+#На slave-сервере нужно указать координаты для подключения к master
+nano slave.sql
+#Содержимое slave.sql
+CHANGE MASTER TO MASTER_HOST='netology-db-master', MASTER_USER='repl', MASTER_PASSWORD='slavepass';
+```
+Создадим файл для docker-compose
+
+```
+nano docker-compose.yml
+
+#Содержимое docker-compose.yml
+version: '3.7'
+
+services:
+    mysql:
+        image: 'percona:8.0'
+        container_name: netology-db-master
+        volumes:
+            - ./master.cnf:/etc/my.cnf.d/repl.cnf
+            - ./master.sql:/docker-entrypoint-initdb.d/start.sql
+        environment:
+            MYSQL_ROOT_PASSWORD: "secret"
+
+    mysqlread1:
+        image: 'percona:8.0'
+        container_name: netology-db-slave
+        volumes:
+            - ./slave.cnf:/etc/my.cnf.d/repl.cnf
+            - ./slave.sql:/docker-entrypoint-initdb.d/start.sql
+        depends_on:
+            - mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: "secret"
+```
+# Запускаем
+
+```
+docker-compose rm -vf && docker-compose up
+```
+
+# Проверка
+Открываем ещё 1 терминал, заходим в master-сервер
+
+```
+docker exec -it netology-db-master mysql -uroot -psecret
+```
+
+И ещё 1 терминал, заходим в любой slave
+
+```
+docker exec -it netology-db-slave mysql -uroot -psecret
+```
+
+# Создадим на master базу данных и проверим
+
+![img](img/2.PNG)
 
 
----
-
-## Дополнительные задания (со звёздочкой*)
-Эти задания дополнительные, то есть не обязательные к выполнению, и никак не повлияют на получение вами зачёта по этому домашнему заданию. Вы можете их выполнить, если хотите глубже шире разобраться в материале.
-
----
-
-### Задание 3* 
-
-Выполните конфигурацию master-master репликации. Произведите проверку.
-
-*Приложите скриншоты конфигурации, выполнения работы: состояния и режимы работы серверов.*
