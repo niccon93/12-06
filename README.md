@@ -142,7 +142,7 @@ docker exec -it netology-db-master mysql -uroot -psecret
 docker exec -it netology-db-slave mysql -uroot -psecret
 ```
 
-# Создадим на master базу данных и проверим
+### Создадим на master базу данных и проверим
 
 ![img](img/2.PNG)
 
